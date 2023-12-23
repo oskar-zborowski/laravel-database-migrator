@@ -1,0 +1,1 @@
+**The package enables easy migration of data from one database to another using Laravel database tools by configuring the mapping of appropriate columns in tables and setting migration conditions so that only the data of interest is transferred.**
