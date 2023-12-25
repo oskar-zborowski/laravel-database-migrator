@@ -14,25 +14,54 @@ class LaravelDatabaseQuery
 {
     private array $allowedClasses = [DB::class, Model::class];
 
+    private ?Collection $collection;
+
+    private ?array $recordsArray;
+
     public function __construct(
+        private ?string $id = null,
         private DB|Connection|QueryBuilder|EloquentBuilder|Collection|array|string|null $query = null,
         private ?string $rawQuery = null,
         private ?array $bindings = null,
         private ?string $connectionName = null,
+        private ?string $relatedId = null,
+        private ?string $foreignKey = null,
+        private string $localKey = 'id',
     ) {
         $this->checkIfQueryIsAllowedInstance();
+        $this->checkIfConnectionIsCorrect();
+    }
+
+    public function setId(string $id = null): void
+    {
+        $this->id = $id;
+    }
+
+    public function getId(): ?string
+    {
+        return $this->id;
+    }
+
+    public function clearId(): void
+    {
+        $this->setId();
     }
 
     public function setQuery(DB|Connection|QueryBuilder|EloquentBuilder|Collection|array|string $query = null): void
     {
-        $this->checkIfQueryIsAllowedInstance();
-
         $this->query = $query;
+
+        $this->checkIfQueryIsAllowedInstance();
     }
 
     public function getQuery(): DB|Connection|QueryBuilder|EloquentBuilder|Collection|array|string|null
     {
         return $this->query;
+    }
+
+    public function clearQuery(): void
+    {
+        $this->setQuery();
     }
 
     public function setRawQuery(string $rawQuery = null): void
@@ -45,9 +74,19 @@ class LaravelDatabaseQuery
         return $this->rawQuery;
     }
 
+    public function clearRawQuery(): void
+    {
+        $this->setRawQuery();
+    }
+
     public function setBindings(array $bindings = null): void
     {
         $this->bindings = $bindings;
+    }
+
+    public function addBindings(array $bindings): void
+    {
+        $this->setBindings(array_merge($this->getBindings(), $bindings));
     }
 
     public function getBindings(): ?array
@@ -55,9 +94,16 @@ class LaravelDatabaseQuery
         return $this->bindings;
     }
 
+    public function clearBindings(): void
+    {
+        $this->setBindings();
+    }
+
     public function setConnectionName(string $connectionName = null): void
     {
         $this->connectionName = $connectionName;
+
+        $this->checkIfConnectionIsCorrect();
     }
 
     public function getConnectionName(): ?string
@@ -65,16 +111,119 @@ class LaravelDatabaseQuery
         return $this->connectionName;
     }
 
+    public function clearConnectionName(): void
+    {
+        $this->setConnectionName();
+    }
+
+    public function setRelatedId(string $relatedId = null): void
+    {
+        $this->relatedId = $relatedId;
+    }
+
+    public function getRelatedId(): ?string
+    {
+        return $this->relatedId;
+    }
+
+    public function clearRelatedId(): void
+    {
+        $this->setRelatedId();
+    }
+
+    public function setForeignKey(string $foreignKey = null): void
+    {
+        $this->foreignKey = $foreignKey;
+    }
+
+    public function getForeignKey(): ?string
+    {
+        return $this->foreignKey;
+    }
+
+    public function clearForeignKey(): void
+    {
+        $this->setForeignKey();
+    }
+
+    public function setLocalKey(string $localKey): void
+    {
+        $this->localKey = $localKey;
+    }
+
+    public function getLocalKey(): string
+    {
+        return $this->localKey;
+    }
+
+    public function setCollection(Collection $collection = null): void
+    {
+        $this->collection = $collection;
+    }
+
+    public function addCollection(Collection $collection): void
+    {
+        $this->setCollection($this->getCollection()->merge($collection));
+    }
+
+    public function getCollection(): ?Collection
+    {
+        return $this->collection;
+    }
+
+    public function clearCollection(): void
+    {
+        $this->setCollection();
+    }
+
+    public function setRecordsArray(array $recordsArray = null): void
+    {
+        $this->recordsArray = $recordsArray;
+    }
+
+    public function addRecordsArray(array $recordsArray): void
+    {
+        $this->setRecordsArray(array_merge($this->getRecordsArray(), $recordsArray));
+    }
+
+    public function getRecordsArray(): ?array
+    {
+        return $this->recordsArray;
+    }
+
+    public function clearRecordsArray(): void
+    {
+        $this->setRecordsArray();
+    }
+
+    public function getAllowedClasses(): array
+    {
+        return $this->allowedClasses;
+    }
+
     private function checkIfQueryIsAllowedInstance(): bool
     {
-        if ('string' !== gettype($this->query)) {
+        $query = $this->getQuery();
+
+        if ('string' !== gettype($query)) {
             return true;
         }
 
-        foreach ($this->allowedClasses as $allowedClass) {
-            if (new $this->query instanceof $allowedClass) {
+        foreach ($this->getAllowedClasses() as $allowedClass) {
+            if (new $query instanceof $allowedClass) {
                 return true;
             }
+        }
+
+        throw new Exception('Do uzupełnienia');
+    }
+
+    private function checkIfConnectionIsCorrect(): bool
+    {
+        if (null === $this->getConnectionName() ||
+            DB::connection($this->getConnectionName())->getPdo()
+        ) {
+            return true;
         }
 
         throw new Exception('Do uzupełnienia');
