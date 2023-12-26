@@ -86,7 +86,7 @@ class LaravelDatabaseQuery
 
     public function addBindings(array $bindings): void
     {
-        $this->setBindings(array_merge($this->getBindings(), $bindings));
+        $this->setBindings(array_merge($this->getBindings() ?? [], $bindings));
     }
 
     public function getBindings(): ?array
@@ -163,7 +163,11 @@ class LaravelDatabaseQuery
 
     public function addCollection(Collection $collection): void
     {
-        $this->setCollection($this->getCollection()->merge($collection));
+        $existingCollection = $this->getCollection();
+
+        $existingCollection
+            ? $this->setCollection($existingCollection->merge($collection))
+            : $this->setCollection($collection);
     }
 
     public function getCollection(): ?Collection
@@ -183,7 +187,7 @@ class LaravelDatabaseQuery
 
     public function addRecordsArray(array $recordsArray): void
     {
-        $this->setRecordsArray(array_merge($this->getRecordsArray(), $recordsArray));
+        $this->setRecordsArray(array_merge($this->getRecordsArray() ?? [], $recordsArray));
     }
 
     public function getRecordsArray(): ?array
@@ -205,7 +209,7 @@ class LaravelDatabaseQuery
     {
         $query = $this->getQuery();
 
-        if ('string' !== gettype($query)) {
+        if ('string' !== gettype($query) || $query === '[]') {
             return true;
         }
 
