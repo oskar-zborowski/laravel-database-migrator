@@ -10,7 +10,7 @@ class LaravelDatabaseMapper
         private string $targetColumn,
         private ?string $sourceColumn = null,
         private LaravelDatabaseQuery|string|null $query = null,
-        // TODO Formatowanie pola
+        private ?callable $columnFormatting = null,
     ) {}
 
     public function setTargetColumn(string $targetColumn): void
@@ -51,5 +51,20 @@ class LaravelDatabaseMapper
     public function clearQuery(): void
     {
         $this->setQuery();
+    }
+
+    public function setColumnFormatting(callable $columnFormatting = null): void
+    {
+        $this->columnFormatting = $columnFormatting;
+    }
+
+    public function getColumnFormatting(): ?callable
+    {
+        return $this->columnFormatting;
+    }
+
+    public function clearColumnFormatting(): void
+    {
+        $this->setColumnFormatting();
     }
 }

@@ -26,7 +26,7 @@ class LaravelDatabaseQuery
         private ?string $connectionName = null,
         private ?string $relatedId = null,
         private ?string $foreignKey = null,
-        private string $localKey = 'id',
+        private ?string $localKey = null,
     ) {
         $this->checkIfQueryIsAllowedInstance();
         $this->checkIfConnectionIsCorrect();
@@ -146,14 +146,19 @@ class LaravelDatabaseQuery
         $this->setForeignKey();
     }
 
-    public function setLocalKey(string $localKey): void
+    public function setLocalKey(string $localKey = null): void
     {
         $this->localKey = $localKey;
     }
 
-    public function getLocalKey(): string
+    public function getLocalKey(): ?string
     {
         return $this->localKey;
+    }
+
+    public function clearLocalKey(): void
+    {
+        $this->setLocalKey();
     }
 
     public function setCollection(Collection $collection = null): void
