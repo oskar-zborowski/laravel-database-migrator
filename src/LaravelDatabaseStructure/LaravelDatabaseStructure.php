@@ -3,7 +3,11 @@
 namespace OskarZborowski\LaravelDatabaseMigrator\LaravelDatabaseStructure;
 
 use Exception;
+use Illuminate\Database\Connection;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use OskarZborowski\LaravelDatabaseMigrator\LaravelDatabaseMapper\LaravelDatabaseMapper;
 
@@ -11,24 +15,30 @@ class LaravelDatabaseStructure
 {
     private array $allowedClasses = [DB::class, Model::class];
 
+    private ?Collection $defaultCollection;
+
+    private ?array $defaultRecordsArray;
+
     public function __construct(
         private string $object,
         private array $mappers,
-        // TODO Flaga z informacją czy funkcja zapisująca jest zapisywaniem masowym
-        // private ?string $createMethod = null,
-        // private ?string $updateMethod = null,
-        // private ?string $deleteMethod = null,
-        // TODO Flaga z określeniem czy brak elementów ma usunąć elementy
-        // TODO Pole z nazwą kolumny po znalezieniu którego element zostanie usunięty
-        // TODO Pole z nazwą kolumny do miękkiego usuwania
+        private ?bool $isSavedOnce = null,
+        private ?string $createMethod = null,
+        private ?string $updateMethod = null,
+        private ?string $deleteMethod = null,
+        private ?bool $isRemovedIfNotExist = null,
+        private ?string $removalColumn = null,
+        private ?string $softDeleteColumn = null,
         private ?string $defaultId = null,
-        // private DB|Connection|QueryBuilder|EloquentBuilder|Collection|array|string|null $defaultQuery = null,
+        private DB|Connection|QueryBuilder|EloquentBuilder|Collection|array|string|null $defaultQuery = null,
         private ?array $defaultBindings = null,
         private ?string $defaultConnectionName = null,
         private ?string $defaultLocalKey = null,
     ) {
         $this->checkIfObjectIsAllowedInstance();
         $this->checkIfMappersAreAllowedInstances();
+        $this->replaceDefaultQueryArrayStringWithArray();
+        $this->checkIfDefaultQueryIsAllowedInstance();
         $this->checkIfDefaultConnectionIsCorrect();
     }
 
@@ -62,6 +72,111 @@ class LaravelDatabaseStructure
         return $this->mappers;
     }
 
+    public function setIsSavedOnce(bool $isSavedOnce = null): void
+    {
+        $this->isSavedOnce = $isSavedOnce;
+    }
+
+    public function getIsSavedOnce(): ?bool
+    {
+        return $this->isSavedOnce;
+    }
+
+    public function clearIsSavedOnce(): void
+    {
+        $this->setIsSavedOnce();
+    }
+
+    public function setCreateMethod(string $createMethod = null): void
+    {
+        $this->createMethod = $createMethod;
+    }
+
+    public function getCreateMethod(): ?string
+    {
+        return $this->createMethod;
+    }
+
+    public function clearCreateMethod(): void
+    {
+        $this->setCreateMethod();
+    }
+
+    public function setUpdateMethod(string $updateMethod = null): void
+    {
+        $this->updateMethod = $updateMethod;
+    }
+
+    public function getUpdateMethod(): ?string
+    {
+        return $this->updateMethod;
+    }
+
+    public function clearUpdateMethod(): void
+    {
+        $this->setUpdateMethod();
+    }
+
+    public function setDeleteMethod(string $deleteMethod = null): void
+    {
+        $this->deleteMethod = $deleteMethod;
+    }
+
+    public function getDeleteMethod(): ?string
+    {
+        return $this->deleteMethod;
+    }
+
+    public function clearDeleteMethod(): void
+    {
+        $this->setDeleteMethod();
+    }
+
+    public function setIsRemovedIfNotExist(bool $isRemovedIfNotExist = null): void
+    {
+        $this->isRemovedIfNotExist = $isRemovedIfNotExist;
+    }
+
+    public function getIsRemovedIfNotExist(): ?bool
+    {
+        return $this->isRemovedIfNotExist;
+    }
+
+    public function clearIsRemovedIfNotExist(): void
+    {
+        $this->setIsRemovedIfNotExist();
+    }
+
+    public function setRemovalColumn(string $removalColumn = null): void
+    {
+        $this->removalColumn = $removalColumn;
+    }
+
+    public function getRemovalColumn(): ?string
+    {
+        return $this->removalColumn;
+    }
+
+    public function clearRemovalColumn(): void
+    {
+        $this->setRemovalColumn();
+    }
+
+    public function setSoftDeleteColumn(string $softDeleteColumn = null): void
+    {
+        $this->softDeleteColumn = $softDeleteColumn;
+    }
+
+    public function getSoftDeleteColumn(): ?string
+    {
+        return $this->softDeleteColumn;
+    }
+
+    public function clearSoftDeleteColumn(): void
+    {
+        $this->setSoftDeleteColumn();
+    }
+
     public function setDefaultId(string $defaultId = null): void
     {
         $this->defaultId = $defaultId;
@@ -75,6 +190,24 @@ class LaravelDatabaseStructure
     public function clearDefaultId(): void
     {
         $this->setDefaultId();
+    }
+
+    public function setDefaultQuery(DB|Connection|QueryBuilder|EloquentBuilder|Collection|array|string $defaultQuery = null): void
+    {
+        $this->defaultQuery = $defaultQuery;
+
+        $this->replaceDefaultQueryArrayStringWithArray();
+        $this->checkIfDefaultQueryIsAllowedInstance();
+    }
+
+    public function getDefaultQuery(): DB|Connection|QueryBuilder|EloquentBuilder|Collection|array|string|null
+    {
+        return $this->defaultQuery;
+    }
+
+    public function clearDefaultQuery(): void
+    {
+        $this->setDefaultQuery();
     }
 
     public function setDefaultBindings(array $defaultBindings = null): void
@@ -129,6 +262,50 @@ class LaravelDatabaseStructure
         $this->setDefaultLocalKey();
     }
 
+    public function setDefaultCollection(Collection $defaultCollection = null): void
+    {
+        $this->defaultCollection = $defaultCollection;
+    }
+
+    public function addDefaultCollection(Collection $defaultCollection): void
+    {
+        $existingDefaultCollection = $this->getDefaultCollection();
+
+        $existingDefaultCollection
+            ? $this->setDefaultCollection($existingDefaultCollection->merge($defaultCollection))
+            : $this->setDefaultCollection($defaultCollection);
+    }
+
+    public function getDefaultCollection(): ?Collection
+    {
+        return $this->defaultCollection;
+    }
+
+    public function clearDefaultCollection(): void
+    {
+        $this->setDefaultCollection();
+    }
+
+    public function setDefaultRecordsArray(array $defaultRecordsArray = null): void
+    {
+        $this->defaultRecordsArray = $defaultRecordsArray;
+    }
+
+    public function adddefaultRecordsArray(array $defaultRecordsArray): void
+    {
+        $this->setDefaultRecordsArray(array_merge($this->getDefaultRecordsArray() ?? [], $defaultRecordsArray));
+    }
+
+    public function getDefaultRecordsArray(): ?array
+    {
+        return $this->defaultRecordsArray;
+    }
+
+    public function clearDefaultRecordsArray(): void
+    {
+        $this->setDefaultRecordsArray();
+    }
+
     public function getAllowedClasses(): array
     {
         return $this->allowedClasses;
@@ -156,6 +333,30 @@ class LaravelDatabaseStructure
         }
 
         return true;
+    }
+
+    private function replaceDefaultQueryArrayStringWithArray(): void
+    {
+        if ($this->getDefaultQuery() === '[]') {
+            $this->setDefaultQuery([]);
+        }
+    }
+
+    private function checkIfDefaultQueryIsAllowedInstance(): bool
+    {
+        $query = $this->getDefaultQuery();
+
+        if ('string' !== gettype($query)) {
+            return true;
+        }
+
+        foreach ($this->getAllowedClasses() as $allowedClass) {
+            if (new $query instanceof $allowedClass) {
+                return true;
+            }
+        }
+
+        throw new Exception('Do uzupełnienia');
     }
 
     private function checkIfDefaultConnectionIsCorrect(): bool

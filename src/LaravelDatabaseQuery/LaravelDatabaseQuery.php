@@ -28,6 +28,7 @@ class LaravelDatabaseQuery
         private ?string $foreignKey = null,
         private ?string $localKey = null,
     ) {
+        $this->replaceQueryArrayStringWithArray();
         $this->checkIfQueryIsAllowedInstance();
         $this->checkIfConnectionIsCorrect();
     }
@@ -51,6 +52,7 @@ class LaravelDatabaseQuery
     {
         $this->query = $query;
 
+        $this->replaceQueryArrayStringWithArray();
         $this->checkIfQueryIsAllowedInstance();
     }
 
@@ -210,11 +212,18 @@ class LaravelDatabaseQuery
         return $this->allowedClasses;
     }
 
+    private function replaceQueryArrayStringWithArray(): void
+    {
+        if ($this->getQuery() === '[]') {
+            $this->setQuery([]);
+        }
+    }
+
     private function checkIfQueryIsAllowedInstance(): bool
     {
         $query = $this->getQuery();
 
-        if ('string' !== gettype($query) || $query === '[]') {
+        if ('string' !== gettype($query)) {
             return true;
         }
 
