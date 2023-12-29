@@ -29,10 +29,12 @@ class LaravelDatabaseStructure
         private ?bool $isRemovedIfNotExist = null,
         private ?string $removalColumn = null,
         private ?string $softDeleteColumn = null,
-        private ?string $defaultId = null,
         private DB|Connection|QueryBuilder|EloquentBuilder|Collection|array|string|null $defaultQuery = null,
+        private ?string $defaultRawQuery = null,
         private ?array $defaultBindings = null,
         private ?string $defaultConnectionName = null,
+        private ?string $defaultRelatedId = null,
+        private ?string $defaultForeignKey = null,
         private ?string $defaultLocalKey = null,
     ) {
         $this->checkIfObjectIsAllowedInstance();
@@ -177,21 +179,6 @@ class LaravelDatabaseStructure
         $this->setSoftDeleteColumn();
     }
 
-    public function setDefaultId(string $defaultId = null): void
-    {
-        $this->defaultId = $defaultId;
-    }
-
-    public function getDefaultId(): ?string
-    {
-        return $this->defaultId;
-    }
-
-    public function clearDefaultId(): void
-    {
-        $this->setDefaultId();
-    }
-
     public function setDefaultQuery(DB|Connection|QueryBuilder|EloquentBuilder|Collection|array|string $defaultQuery = null): void
     {
         $this->defaultQuery = $defaultQuery;
@@ -208,6 +195,21 @@ class LaravelDatabaseStructure
     public function clearDefaultQuery(): void
     {
         $this->setDefaultQuery();
+    }
+
+    public function setDefaultRawQuery(string $defaultRawQuery = null): void
+    {
+        $this->defaultRawQuery = $defaultRawQuery;
+    }
+
+    public function getDefaultRawQuery(): ?string
+    {
+        return $this->defaultRawQuery;
+    }
+
+    public function clearDefaultRawQuery(): void
+    {
+        $this->setDefaultRawQuery();
     }
 
     public function setDefaultBindings(array $defaultBindings = null): void
@@ -245,6 +247,36 @@ class LaravelDatabaseStructure
     public function clearDefaultConnectionName(): void
     {
         $this->setDefaultConnectionName();
+    }
+
+    public function setDefaultRelatedId(string $defaultRelatedId = null): void
+    {
+        $this->defaultRelatedId = $defaultRelatedId;
+    }
+
+    public function getDefaultRelatedId(): ?string
+    {
+        return $this->defaultRelatedId;
+    }
+
+    public function clearDefaultRelatedId(): void
+    {
+        $this->setDefaultRelatedId();
+    }
+
+    public function setDefaultForeignKey(string $defaultForeignKey = null): void
+    {
+        $this->defaultForeignKey = $defaultForeignKey;
+    }
+
+    public function getDefaultForeignKey(): ?string
+    {
+        return $this->defaultForeignKey;
+    }
+
+    public function clearDefaultForeignKey(): void
+    {
+        $this->setDefaultForeignKey();
     }
 
     public function setDefaultLocalKey(string $defaultLocalKey = null): void
